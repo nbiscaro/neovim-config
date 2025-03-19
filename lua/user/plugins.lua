@@ -137,6 +137,9 @@ return packer.startup(function(use)
   -- Project
   use "ahmedkhalf/project.nvim"
 
+  -- Neovim welcome page
+  use 'goolord/alpha-nvim'
+
   -- Automatically set up your configuration after cloning packer.nvim
   -- Put this at the end after all plugins
   if PACKER_BOOTSTRAP then

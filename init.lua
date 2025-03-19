@@ -11,6 +11,7 @@ require("user.lualine")
 require("user.nvim-tree")
 
 -- Then load other modules
+require("user.alpha")
 require("user.autopairs")
 require("user.cmp")
 require("user.comments")
