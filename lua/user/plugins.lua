@@ -120,6 +120,8 @@ return packer.startup(function(use)
   -- Debug adapter protocol for Rust debugging
   use "mfussenegger/nvim-dap"
 
+  use "numToStr/Comment.nvim" -- Easily comment stuff
+
   -- Automatically set up your configuration after cloning packer.nvim
   -- Put this at the end after all plugins
   if PACKER_BOOTSTRAP then

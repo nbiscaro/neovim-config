@@ -1,6 +1,7 @@
 require("user.autopairs")
 require("user.colorscheme")
 require("user.cmp")
+require("user.comments")
 require("user.keymaps")
 require("user.lualine")
 require("user.options")
