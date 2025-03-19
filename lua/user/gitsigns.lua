@@ -5,15 +5,51 @@ function M.setup()
     if not status_ok then
         return
     end
+    
+    -- Set up highlight groups
+    local function setup_highlights()
+        -- Add
+        vim.api.nvim_set_hl(0, 'GitSignsAdd', { link = 'DiffAdd' })
+        vim.api.nvim_set_hl(0, 'GitSignsAddNr', { link = 'GitSignsAdd' })
+        vim.api.nvim_set_hl(0, 'GitSignsAddLn', { link = 'GitSignsAdd' })
+        
+        -- Change
+        vim.api.nvim_set_hl(0, 'GitSignsChange', { link = 'DiffChange' })
+        vim.api.nvim_set_hl(0, 'GitSignsChangeNr', { link = 'GitSignsChange' })
+        vim.api.nvim_set_hl(0, 'GitSignsChangeLn', { link = 'GitSignsChange' })
+        
+        -- Delete
+        vim.api.nvim_set_hl(0, 'GitSignsDelete', { link = 'DiffDelete' })
+        vim.api.nvim_set_hl(0, 'GitSignsDeleteNr', { link = 'GitSignsDelete' })
+        vim.api.nvim_set_hl(0, 'GitSignsDeleteLn', { link = 'GitSignsDelete' })
+        
+        -- Topdelete
+        vim.api.nvim_set_hl(0, 'GitSignsTopdelete', { link = 'GitSignsDelete' })
+        vim.api.nvim_set_hl(0, 'GitSignsTopdeleteNr', { link = 'GitSignsDeleteNr' })
+        vim.api.nvim_set_hl(0, 'GitSignsTopdeleteLn', { link = 'GitSignsDeleteLn' })
+        
+        -- Changedelete
+        vim.api.nvim_set_hl(0, 'GitSignsChangedelete', { link = 'GitSignsChange' })
+        vim.api.nvim_set_hl(0, 'GitSignsChangedeleteNr', { link = 'GitSignsChangeNr' })
+        vim.api.nvim_set_hl(0, 'GitSignsChangedeleteLn', { link = 'GitSignsChangeLn' })
+        
+        -- Untracked
+        vim.api.nvim_set_hl(0, 'GitSignsUntracked', { link = 'GitSignsAdd' })
+        vim.api.nvim_set_hl(0, 'GitSignsUntrackedNr', { link = 'GitSignsAddNr' })
+        vim.api.nvim_set_hl(0, 'GitSignsUntrackedLn', { link = 'GitSignsAddLn' })
+    end
+    
+    -- Call setup_highlights before gitsigns setup
+    setup_highlights()
 
     gitsigns.setup {
         signs = {
-            add          = { hl = 'GitSignsAdd',    text = '│', numhl='GitSignsAddNr',    linehl='GitSignsAddLn' },
-            change       = { hl = 'GitSignsChange', text = '│', numhl='GitSignsChangeNr', linehl='GitSignsChangeLn' },
-            delete       = { hl = 'GitSignsDelete', text = '_', numhl='GitSignsDeleteNr', linehl='GitSignsDeleteLn' },
-            topdelete    = { hl = 'GitSignsDelete', text = '‾', numhl='GitSignsDeleteNr', linehl='GitSignsDeleteLn' },
-            changedelete = { hl = 'GitSignsChange', text = '~', numhl='GitSignsChangeNr', linehl='GitSignsChangeLn' },
-            untracked    = { hl = 'GitSignsAdd',    text = '┆', numhl='GitSignsAddNr',    linehl='GitSignsAddLn' },
+            add          = { text = '│' },
+            change       = { text = '│' },
+            delete       = { text = '_' },
+            topdelete    = { text = '‾' },
+            changedelete = { text = '~' },
+            untracked    = { text = '┆' },
         },
         signcolumn = true,  -- Toggle with `:Gitsigns toggle_signs`
         numhl      = false, -- Toggle with `:Gitsigns toggle_numhl`
@@ -43,9 +79,6 @@ function M.setup()
             relative = 'cursor',
             row = 0,
             col = 1
-        },
-        yadm = {
-            enable = false
         },
         -- Keymaps for gitsigns operations
         on_attach = function(bufnr)
