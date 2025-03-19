@@ -94,6 +94,12 @@ return packer.startup(function(use)
 
   -- Toggleterm floating terminal window
   use "akinsho/toggleterm.nvim"
+  
+  -- Diffview for better diff viewing
+  use {
+    "sindrets/diffview.nvim",
+    requires = "nvim-lua/plenary.nvim"
+  }
 
   -- Automatically set up your configuration after cloning packer.nvim
   -- Put this at the end after all plugins
