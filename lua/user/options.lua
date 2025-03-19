@@ -33,6 +33,8 @@ vim.opt.wrap = false                            -- display lines as one long lin
 vim.opt.scrolloff = 8                           -- is one of my fav
 vim.opt.sidescrolloff = 8
 vim.opt.guifont = "monospace:h17"               -- the font used in graphical neovim applications
+vim.opt.endofline = true                        -- ensure files end with a newline
+vim.opt.fixendofline = true                     -- add a newline if there isn't one at the end of the file
 
 vim.opt.shortmess:append "c"
 
