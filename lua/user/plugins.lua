@@ -50,7 +50,8 @@ return packer.startup(function(use)
 
   use "windwp/nvim-autopairs" -- Autopairs, integrates with both cmp and treesitter
 
-  use 'kyazdani42/nvim-web-devicons'
+  -- Icons for UI elements
+  use 'nvim-tree/nvim-web-devicons'
   use 'kyazdani42/nvim-tree.lua'
 
    -- Fuzzy finder
@@ -120,7 +121,18 @@ return packer.startup(function(use)
   -- Debug adapter protocol for Rust debugging
   use "mfussenegger/nvim-dap"
 
-  use "numToStr/Comment.nvim" -- Easily comment stuff
+  -- Easily comment stuff
+  use "numToStr/Comment.nvim"
+
+  -- Buffer management
+  use "famiu/bufdelete.nvim"  -- Add this plugin for proper buffer deletion
+
+  -- Bufferline 
+  use { 
+    "akinsho/bufferline.nvim", 
+    tag = "v4.*",  -- Try the latest v4 version instead
+    requires = "nvim-tree/nvim-web-devicons"
+  }
 
   -- Automatically set up your configuration after cloning packer.nvim
   -- Put this at the end after all plugins
