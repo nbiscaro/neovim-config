@@ -81,6 +81,7 @@ return packer.startup(function(use)
     run = ":MasonUpdate"
   }
   use "williamboman/mason-lspconfig.nvim"
+  use "jose-elias-alvarez/null-ls.nvim"
 
    -- Completion
   use "hrsh7th/nvim-cmp" -- The completion plugin
@@ -96,9 +97,19 @@ return packer.startup(function(use)
   use "akinsho/toggleterm.nvim"
   
   -- Diffview for better diff viewing
+  -- Rust tools for enhanced Rust development experience
   use {
     "sindrets/diffview.nvim",
     requires = "nvim-lua/plenary.nvim"
+  }
+
+  use {
+    "simrat39/rust-tools.nvim",
+    requires = {
+      "neovim/nvim-lspconfig",
+      "nvim-lua/plenary.nvim",
+      "mfussenegger/nvim-dap"  -- For debugging support
+    }
   }
   
   -- Gitsigns - provides line-by-line git blame, line indicators, and hunk actions
@@ -106,6 +117,8 @@ return packer.startup(function(use)
     "lewis6991/gitsigns.nvim",
     requires = "nvim-lua/plenary.nvim"
   }
+  -- Debug adapter protocol for Rust debugging
+  use "mfussenegger/nvim-dap"
 
   -- Automatically set up your configuration after cloning packer.nvim
   -- Put this at the end after all plugins
