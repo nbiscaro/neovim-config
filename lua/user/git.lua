@@ -229,6 +229,9 @@ function M.setup()
     -- Configure diffview
     setup_diffview()
     
+    -- Setup gitsigns
+    require("user.gitsigns").setup()
+    
     -- Setup keymaps
     setup_keymaps()
 end
