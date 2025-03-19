@@ -140,6 +140,9 @@ return packer.startup(function(use)
   -- Neovim welcome page
   use 'goolord/alpha-nvim'
 
+  -- Which-key for keybinding help
+  use "folke/which-key.nvim"
+
   -- Automatically set up your configuration after cloning packer.nvim
   -- Put this at the end after all plugins
   if PACKER_BOOTSTRAP then
