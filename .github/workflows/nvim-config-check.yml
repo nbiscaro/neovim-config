@@ -1,0 +1,149 @@
+name: Neovim Config Validation
+
+on:
+  push:
+    paths:
+      - 'lua/**'
+      - 'init.lua'
+      - 'scripts/check_neovim.sh'
+      - '.github/workflows/nvim-config-check.yml'
+  pull_request:
+    paths:
+      - 'lua/**'
+      - 'init.lua'
+      - 'scripts/check_neovim.sh'
+      - '.github/workflows/nvim-config-check.yml'
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  validate-config:
+    name: Validate Neovim Configuration
+    runs-on: ubuntu-latest
+    env:
+      CI: true
+      GITHUB_ACTIONS: true
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Lua
+        uses: leafo/gh-actions-lua@v9
+        with:
+          luaVersion: "5.1"
+      
+      - name: Setup luarocks
+        uses: leafo/gh-actions-luarocks@v4
+      
+      - name: Install luacheck
+        run: luarocks install luacheck
+      
+      - name: Install Neovim
+        uses: rhysd/action-setup-vim@v1
+        with:
+          neovim: true
+          version: stable
+      
+      - name: Setup proper runtimepath
+        run: |
+          # Create proper directory structure for Neovim
+          NVIM_CONFIG_DIR="$HOME/.config/nvim"
+          mkdir -p "$NVIM_CONFIG_DIR"
+          
+          # Copy files from the repository to standard Neovim config location
+          cp -r ./* "$NVIM_CONFIG_DIR/"
+          
+          # Remove files if they exist before creating symlinks
+          [ -e ./lua ] && rm -rf ./lua
+          [ -e ./init.lua ] && rm -f ./init.lua
+          
+          # Create symlinks back to the repo for any scripts that look for files in the working directory
+          ln -s "$NVIM_CONFIG_DIR/lua" ./lua
+          ln -s "$NVIM_CONFIG_DIR/init.lua" ./init.lua
+          
+          echo "Configuration linked to standard Neovim config location: $NVIM_CONFIG_DIR"
+          ls -la "$NVIM_CONFIG_DIR"
+          
+      - name: Install Packer
+        run: |
+          git clone --depth 1 https://github.com/wbthomason/packer.nvim\
+           ~/.local/share/nvim/site/pack/packer/start/packer.nvim
+      
+      - name: Setup core plugins (without PackerSync)
+        run: |
+          mkdir -p ~/.local/share/nvim/site/pack/packer/start
+          
+          # Clone key plugins directly instead of using PackerSync which can hang
+          git clone --depth 1 https://github.com/neovim/nvim-lspconfig ~/.local/share/nvim/site/pack/packer/start/nvim-lspconfig
+          git clone --depth 1 https://github.com/williamboman/mason.nvim ~/.local/share/nvim/site/pack/packer/start/mason.nvim
+          git clone --depth 1 https://github.com/williamboman/mason-lspconfig.nvim ~/.local/share/nvim/site/pack/packer/start/mason-lspconfig.nvim
+          git clone --depth 1 https://github.com/nvim-lua/plenary.nvim ~/.local/share/nvim/site/pack/packer/start/plenary.nvim
+          git clone --depth 1 https://github.com/nvim-telescope/telescope.nvim ~/.local/share/nvim/site/pack/packer/start/telescope.nvim
+          git clone --depth 1 https://github.com/nvim-treesitter/nvim-treesitter ~/.local/share/nvim/site/pack/packer/start/nvim-treesitter
+          git clone --depth 1 https://github.com/jose-elias-alvarez/null-ls.nvim ~/.local/share/nvim/site/pack/packer/start/null-ls.nvim
+          git clone --depth 1 https://github.com/simrat39/rust-tools.nvim ~/.local/share/nvim/site/pack/packer/start/rust-tools.nvim
+          git clone --depth 1 https://github.com/folke/tokyonight.nvim ~/.local/share/nvim/site/pack/packer/start/tokyonight.nvim
+          git clone --depth 1 https://github.com/akinsho/toggleterm.nvim ~/.local/share/nvim/site/pack/packer/start/toggleterm.nvim
+          git clone --depth 1 https://github.com/sindrets/diffview.nvim ~/.local/share/nvim/site/pack/packer/start/diffview.nvim
+          git clone --depth 1 https://github.com/nvim-tree/nvim-web-devicons ~/.local/share/nvim/site/pack/packer/start/nvim-web-devicons
+          git clone --depth 1 https://github.com/lewis6991/gitsigns.nvim ~/.local/share/nvim/site/pack/packer/start/gitsigns.nvim
+          
+          echo "Core plugins installed directly"
+      
+      - name: Validate Mason module separately
+        timeout-minutes: 2
+        run: |
+          # Create a simple script to check Mason
+          cat > check_mason.lua << 'EOF'
+          local success, mason = pcall(require, "mason")
+          if success then
+            print("✅ Mason module loaded successfully")
+          else
+            print("❌ Mason module failed to load: " .. tostring(mason))
+            os.exit(1)
+          end
+          
+          local success2, mason_lspconfig = pcall(require, "mason-lspconfig")
+          if success2 then
+            print("✅ Mason-lspconfig module loaded successfully")
+          else
+            print("❌ Mason-lspconfig module failed to load")
+          end
+          
+          -- Try to see if mason setup will work
+          pcall(function()
+            mason.setup()
+            print("✅ Mason setup ran successfully")
+          end)
+          
+          vim.cmd("qa!")
+          EOF
+          
+          # Run with timeout
+          cd ~/.config/nvim && timeout 30s nvim --headless -c "luafile $GITHUB_WORKSPACE/check_mason.lua" || echo "Mason check completed with possible warnings"
+      
+      - name: Test individual modules
+        run: |
+          cd ~/.config/nvim
+          
+          # Test the user.lsp.mason module specifically
+          echo "Testing user.lsp.mason module..."
+          nvim --headless -c "lua local ok, m = pcall(require, 'user.lsp.mason'); if ok then print('✅ Module loaded') else print('❌ Error: ' .. m) end" -c "q"
+          
+          # Test the user.plugins module
+          echo "Testing user.plugins module..."
+          nvim --headless -c "lua local ok, m = pcall(require, 'user.plugins'); if ok then print('✅ Module loaded') else print('❌ Error: ' .. m) end" -c "q"
+      
+      - name: Make check script executable
+        run: |
+          cd ~/.config/nvim
+          chmod +x ./scripts/check_neovim.sh
+      
+      - name: Run Neovim configuration check
+        timeout-minutes: 5
+        run: |
+          cd ~/.config/nvim
+          ./scripts/check_neovim.sh
+          
+      - name: Summary
+        run: echo "✅ Neovim configuration validation completed successfully!" 

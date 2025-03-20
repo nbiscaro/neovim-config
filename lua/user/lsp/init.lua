@@ -3,7 +3,8 @@ if not status_ok then
   return
 end
 
-require "user.lsp.mason"
+-- Load LSP components
+require("user.lsp.mason").setup()
 require("user.lsp.handlers").setup()
 require "user.lsp.null-ls"
 
