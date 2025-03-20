@@ -145,7 +145,18 @@ return packer.startup(function(use)
     event = "InsertEnter",
     config = function()
       require("copilot").setup({
-        suggestion = { enabled = true, auto_trigger = true },
+        suggestion = { 
+          enabled = true,
+          auto_trigger = true,
+          keymap = {
+            accept = "<Tab>",
+            accept_word = false,
+            accept_line = false,
+            next = "<C-n>",
+            prev = "<C-p>",
+            dismiss = "<C-x>",
+          },
+        },
         panel = { enabled = true },
         filetypes = { ["*"] = true },
         copilot_node_command = "/opt/homebrew/bin/node"
@@ -163,6 +174,18 @@ return packer.startup(function(use)
 
   -- Copilot lualine integration
   use "AndreM222/copilot-lualine"
+
+  -- AI codecompanion
+  use {
+    "olimorris/codecompanion.nvim",
+    config = function()
+      require("codecompanion").setup()
+    end,
+    requires = {
+      "nvim-lua/plenary.nvim",
+      "nvim-treesitter/nvim-treesitter",
+    }
+  }
 
   -- Neovim welcome page
   use 'goolord/alpha-nvim'

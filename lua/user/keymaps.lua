@@ -72,3 +72,21 @@ keymap("n", "<leader>f", "<cmd>Telescope find_files<cr>", opts)
 keymap("n", "<leader>f", "<cmd>lua require'telescope.builtin'.find_files(require('telescope.themes').get_dropdown({ previewer = false }))<cr>", opts)
 keymap("n", "<c-t>", "<cmd>Telescope live_grep<cr>", opts)
 keymap("n", "<leader>p", "<cmd>Telescope projects<cr>", opts)
+
+-- CodeCompanion keymaps
+
+-- Using <leader>i as prefix for AI companion commands
+keymap("n", "<leader>ic", "<cmd>CodeCompanion<CR>", opts)  -- Open chat interface
+keymap("v", "<leader>ic", "<cmd>CodeCompanion<CR>", opts)  -- Open chat with selection
+
+-- Predefined prompts (visual mode only)
+keymap("v", "<leader>ie", "<cmd>CodeCompanionToggle explain_code<CR>", opts)  -- Explain code
+keymap("v", "<leader>ii", "<cmd>CodeCompanionToggle improve_code<CR>", opts)  -- Improve code
+keymap("v", "<leader>if", "<cmd>CodeCompanionToggle fix_bugs<CR>", opts)      -- Fix bugs
+keymap("v", "<leader>it", "<cmd>CodeCompanionToggle add_tests<CR>", opts)     -- Add tests
+keymap("v", "<leader>id", "<cmd>CodeCompanionToggle documentation<CR>", opts) -- Add documentation
+
+-- Additional controls
+keymap("n", "<leader>ir", "<cmd>CodeCompanionActions<CR>", opts)              -- Show actions menu
+keymap("n", "<leader>ik", "<cmd>CodeCompanionToggle<CR>", opts)               -- Toggle companion window
+
