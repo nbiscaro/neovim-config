@@ -56,23 +56,24 @@ function M.setup()
             on_attach = rust_on_attach,
             capabilities = require("user.lsp.handlers").capabilities,
             
-            -- Add standalone file settings from the rust-analyzer settings
-            settings = require("user.lsp.settings.rust_analyzer"),
-            
-            -- Additional rust-analyzer settings
-            settings = {
-                ["rust-analyzer"] = {
-                    -- Enable experimental features
-                    experimental = {
-                        procAttrMacros = true,
+            -- Merge settings from the rust-analyzer settings file and additional settings
+            settings = vim.tbl_deep_extend(
+                "force",
+                require("user.lsp.settings.rust_analyzer"), 
+                {
+                    ["rust-analyzer"] = {
+                        -- Enable experimental features
+                        experimental = {
+                            procAttrMacros = true,
+                        },
+                        -- Additional checkOnSave settings
+                        checkOnSave = {
+                            command = "clippy",
+                            extraArgs = { "--all", "--all-features" },
+                        },
                     },
-                    -- Additional checkOnSave settings
-                    checkOnSave = {
-                        command = "clippy",
-                        extraArgs = { "--all", "--all-features" },
-                    },
-                },
-            },
+                }
+            ),
         },
         
         -- Debugging settings

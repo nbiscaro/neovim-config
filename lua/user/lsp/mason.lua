@@ -51,10 +51,11 @@ function M.setup()
 		return
 	end
 
-	local opts = {}
+	-- Initialize server options only once
+	local server_opts = {}
 
 	for _, server in pairs(servers) do
-		opts = {
+		server_opts = {
 			on_attach = require("user.lsp.handlers").on_attach,
 			capabilities = require("user.lsp.handlers").capabilities,
 		}
@@ -63,14 +64,28 @@ function M.setup()
 
 		local require_ok, conf_opts = pcall(require, "user.lsp.settings." .. server)
 		if require_ok then
-			opts = vim.tbl_deep_extend("force", conf_opts, opts)
+			server_opts = vim.tbl_deep_extend("force", conf_opts, server_opts)
 		end
 
 		-- Skip rust_analyzer as it's set up by rust-tools
 		if server ~= "rust_analyzer" then
-			lspconfig[server].setup(opts)
+			lspconfig[server].setup(server_opts)
 		end
 	end
+
+	-- Separate autocommand to update clangd client configuration when attached
+	vim.api.nvim_create_autocmd("LspAttach", {
+		callback = function(ev)
+			local current_client = vim.lsp.get_client_by_id(ev.data.client_id)
+			if current_client and current_client.name == "clangd" then
+				local clangd_opts = {
+					args = { "--fallback-style=Google" },
+					capabilities = { offsetEncoding = { "utf-16", "utf-8" } },
+				}
+				current_client.config.capabilities = vim.tbl_deep_extend("force", current_client.config.capabilities, clangd_opts.capabilities)
+			end
+		end,
+	})
 end
 
 return M

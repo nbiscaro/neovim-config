@@ -163,14 +163,13 @@ local schemas = {
   },
 }
 
+-- Remove the extend function since it's unused
 -- local function extend(tab1, tab2)
 --   for _, value in ipairs(tab2 or {}) do
 --     table.insert(tab1, value)
 --   end
 --   return tab1
 -- end
-
-local extended_schemas = extend(schemas, default_schemas)
 
 local opts = {
   settings = {
