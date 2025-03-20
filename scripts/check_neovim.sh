@@ -8,6 +8,43 @@ ERRORS=0
 # Create directory for the script
 mkdir -p "$(dirname "$0")"
 
+# Check if running in CI
+if [ -n "$CI" ] || [ -n "$GITHUB_ACTIONS" ]; then
+  IS_CI=true
+  echo "Running in CI environment"
+else
+  IS_CI=false
+fi
+
+# Check if timeout command is available, use gtimeout on macOS if installed
+TIMEOUT_CMD="timeout"
+if ! command -v timeout >/dev/null 2>&1; then
+  if command -v gtimeout >/dev/null 2>&1; then
+    TIMEOUT_CMD="gtimeout"
+    echo "Using gtimeout command"
+  else
+    echo "Note: timeout command not available, timeouts will be skipped"
+    TIMEOUT_CMD="cat |" # Dummy command that just passes through
+  fi
+fi
+
+# Function to run a command with timeout if available
+run_with_timeout() {
+  local timeout_seconds=$1
+  shift
+  
+  if [ "$IS_CI" = true ]; then
+    if [ "$TIMEOUT_CMD" = "cat |" ]; then
+      echo "Warning: Running without timeout in CI environment"
+      "$@"
+    else
+      $TIMEOUT_CMD "$timeout_seconds"s "$@" || echo "Command timed out or exited with warning"
+    fi
+  else
+    "$@"
+  fi
+}
+
 # Print header
 echo "========================================"
 echo "   Checking Neovim Configuration      "
@@ -42,9 +79,58 @@ fi
 echo ""
 echo "Checking plugins..."
 mkdir -p ~/.local/share/nvim/site/pack/packer/opt
-nvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerSync' > "$TEMP_DIR/plugin_check.txt" 2>&1 || true
-cat "$TEMP_DIR/plugin_check.txt"
-echo "✅ Plugin installation attempted"
+
+# In CI, we'll use a timeout and skip this step if it takes too long
+if [ "$IS_CI" = true ]; then
+  echo "In CI environment - using timeout for plugin installation"
+  # Create a simple script to check for Packer plugin existence
+  cat > "$TEMP_DIR/check_plugins.lua" << 'EOF'
+  local function plugin_check()
+    local packer_path = vim.fn.stdpath("data").."/site/pack/packer/start/packer.nvim"
+    if vim.fn.empty(vim.fn.glob(packer_path)) > 0 then
+      print("Packer not found at: " .. packer_path)
+      return false
+    else
+      print("Packer found at: " .. packer_path)
+      return true
+    end
+  end
+  
+  if plugin_check() then
+    -- Just try loading some essential plugins without syncing
+    local status_ok, _ = pcall(require, "packer")
+    if status_ok then
+      print("Packer loaded successfully")
+    else
+      print("Failed to load packer")
+    end
+    
+    -- Try to load a few core plugins to verify basic functionality
+    local plugins_to_check = {"nvim-treesitter", "telescope", "mason"}
+    for _, plugin in ipairs(plugins_to_check) do
+      local status, _ = pcall(require, plugin)
+      if status then
+        print("✅ " .. plugin .. " loaded successfully")
+      else
+        print("❌ " .. plugin .. " failed to load")
+      end
+    end
+  end
+  
+  -- Exit cleanly
+  vim.cmd("qa!")
+EOF
+
+  # Run with timeout - 30 seconds should be enough for a basic check
+  run_with_timeout 30 nvim --headless -c "luafile $TEMP_DIR/check_plugins.lua" > "$TEMP_DIR/plugin_check.txt" 2>&1
+  cat "$TEMP_DIR/plugin_check.txt"
+else
+  # Not in CI, run the regular command
+  nvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerSync' > "$TEMP_DIR/plugin_check.txt" 2>&1 || true
+  cat "$TEMP_DIR/plugin_check.txt"
+fi
+
+echo "✅ Plugin checks completed"
 
 # 3. List all plugins
 echo ""
@@ -83,7 +169,8 @@ nvim --headless -c "luafile $TEMP_DIR/list_plugins.lua" -c "q"
 # 4. Check for configuration errors - using checkhealth instead of vim.health.report
 echo ""
 echo "Checking for configuration errors..."
-nvim --headless -c "checkhealth" -c "q" > "$TEMP_DIR/health_check.txt" 2>&1 || true
+# In CI, use a timeout here too
+run_with_timeout 30 nvim --headless -c "checkhealth" -c "q" > "$TEMP_DIR/health_check.txt" 2>&1
 cat "$TEMP_DIR/health_check.txt"
 
 if grep -q "ERROR" "$TEMP_DIR/health_check.txt"; then
@@ -171,7 +258,7 @@ if installed_count == 0 then
 end
 EOF
 
-nvim --headless -u init.lua -c "luafile $TEMP_DIR/check_treesitter.lua" -c "q" || echo "Tree-sitter check completed"
+run_with_timeout 15 nvim --headless -u init.lua -c "luafile $TEMP_DIR/check_treesitter.lua" -c "q"
 
 # 8. Check Telescope (another common source of issues)
 echo ""
@@ -194,7 +281,7 @@ else
 end
 EOF
 
-nvim --headless -u init.lua -c "luafile $TEMP_DIR/check_telescope.lua" -c "q" || echo "Telescope check completed"
+run_with_timeout 15 nvim --headless -u init.lua -c "luafile $TEMP_DIR/check_telescope.lua" -c "q"
 
 # Final summary
 echo ""

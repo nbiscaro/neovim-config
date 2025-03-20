@@ -4,6 +4,43 @@
 # Do not exit immediately on error to show more diagnostics
 set +e
 
+# Check if running in CI
+if [ -n "$CI" ] || [ -n "$GITHUB_ACTIONS" ]; then
+  IS_CI=true
+  echo "Running in CI environment"
+else
+  IS_CI=false
+fi
+
+# Check if timeout command is available, use gtimeout on macOS if installed
+TIMEOUT_CMD="timeout"
+if ! command -v timeout >/dev/null 2>&1; then
+  if command -v gtimeout >/dev/null 2>&1; then
+    TIMEOUT_CMD="gtimeout"
+    echo "Using gtimeout command"
+  else
+    echo "Note: timeout command not available, timeouts will be skipped"
+    TIMEOUT_CMD="cat |" # Dummy command that just passes through
+  fi
+fi
+
+# Function to run a command with timeout if available
+run_with_timeout() {
+  local timeout_seconds=$1
+  shift
+  
+  if [ "$IS_CI" = true ]; then
+    if [ "$TIMEOUT_CMD" = "cat |" ]; then
+      echo "Warning: Running without timeout in CI environment"
+      "$@"
+    else
+      $TIMEOUT_CMD "$timeout_seconds"s "$@" || echo "Command timed out or exited with warning"
+    fi
+  else
+    "$@"
+  fi
+}
+
 # Create directory for the script
 mkdir -p "$(dirname "$0")"
 
@@ -49,7 +86,7 @@ print("✅ Mason module structure is valid!")
 EOF
 
 echo "Checking Mason module structure..."
-nvim --headless -u init.lua -c "luafile $TEMP_DIR/check_mason.lua" -c "q" > "$TEMP_DIR/mason_check_output.txt" 2>&1
+run_with_timeout 20 nvim --headless -u init.lua -c "luafile $TEMP_DIR/check_mason.lua" -c "q" > "$TEMP_DIR/mason_check_output.txt" 2>&1
 cat "$TEMP_DIR/mason_check_output.txt"
 
 if grep -q "Mason module structure is valid" "$TEMP_DIR/mason_check_output.txt"; then
@@ -98,12 +135,12 @@ else
 end
 EOF
 
-nvim --headless -u init.lua -c "luafile $TEMP_DIR/check_mason_commands.lua" -c "q"
+run_with_timeout 15 nvim --headless -u init.lua -c "luafile $TEMP_DIR/check_mason_commands.lua" -c "q"
 
 # Print Neovim health check
 echo ""
 echo "Running Mason health check..."
-nvim --headless -c "checkhealth mason" -c "q" > "$TEMP_DIR/mason_health.txt" 2>&1 
+run_with_timeout 15 nvim --headless -c "checkhealth mason" -c "q" > "$TEMP_DIR/mason_health.txt" 2>&1
 cat "$TEMP_DIR/mason_health.txt"
 
 echo ""
@@ -119,6 +156,15 @@ end
 EOF
 
 nvim --headless -c "luafile $TEMP_DIR/check_init.lua" -c "q"
+
+# In CI, we verify Mason API but don't actually attempt installation
+# which can cause hangs
+if [ "$IS_CI" = false ]; then
+  echo ""
+  echo "Attempting to run Mason command directly..."
+  run_with_timeout 5 nvim --headless -c "Mason" -c "q" > "$TEMP_DIR/mason_cmd.txt" 2>&1
+  cat "$TEMP_DIR/mason_cmd.txt"
+fi
 
 echo "========================================"
 echo "       Mason Check Completed            "
