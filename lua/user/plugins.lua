@@ -98,12 +98,12 @@ return packer.startup(function(use)
   use "akinsho/toggleterm.nvim"
   
   -- Diffview for better diff viewing
-  -- Rust tools for enhanced Rust development experience
   use {
     "sindrets/diffview.nvim",
     requires = "nvim-lua/plenary.nvim"
   }
 
+  -- Rust tools for enhanced Rust development experience
   use {
     "simrat39/rust-tools.nvim",
     requires = {
