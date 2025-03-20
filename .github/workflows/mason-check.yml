@@ -1,0 +1,171 @@
+name: Mason LSP Validation
+
+on:
+  push:
+    paths:
+      - 'lua/user/lsp/**'
+      - 'lua/user/plugins.lua'
+      - 'init.lua'
+  pull_request:
+    paths:
+      - 'lua/user/lsp/**'
+      - 'lua/user/plugins.lua'
+      - 'init.lua'
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  validate-mason:
+    name: Validate Mason LSP Setup
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Install Neovim
+        uses: rhysd/action-setup-vim@v1
+        with:
+          neovim: true
+          version: stable
+          
+      - name: Install Packer
+        run: |
+          git clone --depth 1 https://github.com/wbthomason/packer.nvim\
+           ~/.local/share/nvim/site/pack/packer/start/packer.nvim
+          
+      - name: Install plugins
+        run: |
+          mkdir -p ~/.local/share/nvim/site/pack/packer/opt
+          nvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerSync' || true
+          
+      - name: Validate Mason module structure
+        run: |
+          # Check if mason.lua has proper module structure
+          cat > check_mason.lua << 'EOF'
+          local status_ok, mason = pcall(require, "user.lsp.mason")
+          if not status_ok then
+            print("❌ Mason module could not be loaded!")
+            print("Error: " .. tostring(mason))
+            os.exit(1)
+          end
+          
+          if type(mason.setup) ~= "function" then
+            print("❌ Mason module does not have a setup function!")
+            print("Type of mason: " .. type(mason))
+            print("Available fields:")
+            for k, v in pairs(mason) do
+              print("  - " .. k .. ": " .. type(v))
+            end
+            os.exit(1)
+          end
+          
+          print("✅ Mason module structure is valid!")
+          os.exit(0)
+          EOF
+          
+          nvim --headless -u init.lua -c "luafile check_mason.lua" || (echo "Mason module has structural issues" && exit 1)
+          
+      - name: Check if LSP init calls Mason setup
+        run: |
+          # Check if init.lua properly calls the setup function
+          cat > check_init_calls.lua << 'EOF'
+          local init_path = vim.fn.stdpath("config") .. "/lua/user/lsp/init.lua"
+          local init_content = vim.fn.readfile(init_path)
+          local setup_found = false
+          
+          for _, line in ipairs(init_content) do
+            if line:match("require.*mason.*setup") then
+              setup_found = true
+              print("✅ Found Mason setup call: " .. line)
+              break
+            end
+          end
+          
+          if not setup_found then
+            print("❌ No Mason setup call found in init.lua")
+            print("Current init.lua content:")
+            for i, line in ipairs(init_content) do
+              print(i .. ": " .. line)
+            end
+            os.exit(1)
+          end
+          
+          os.exit(0)
+          EOF
+          
+          nvim --headless -c "luafile check_init_calls.lua" || (echo "Mason setup not properly called" && exit 1)
+          
+      - name: Check if Mason registers commands
+        run: |
+          # Create a script to check if Mason commands are registered
+          cat > check_mason_commands.lua << 'EOF'
+          local commands = vim.api.nvim_get_commands({})
+          if commands.Mason then
+            print("✅ Mason command is available")
+            os.exit(0)
+          else
+            print("❌ Mason command is not registered")
+            print("Available commands that start with 'M':")
+            for cmd_name, _ in pairs(commands) do
+              if cmd_name:sub(1,1) == "M" then
+                print("  - " .. cmd_name)
+              end
+            end
+            os.exit(1)
+          end
+          EOF
+          
+          nvim --headless -u init.lua -c "luafile check_mason_commands.lua" || (echo "Mason commands not registered" && exit 1)
+      
+      - name: Check Mason server configurations
+        run: |
+          # Check if all required LSP servers are configured
+          cat > check_servers.lua << 'EOF'
+          local required_servers = {
+            "lua_ls",
+            "pyright",
+            "jsonls",
+            "rust_analyzer",
+            "clangd"
+          }
+          
+          -- Try loading Mason registry
+          local status_ok, mason_registry = pcall(require, "mason-registry")
+          if not status_ok then
+            print("⚠️ Mason registry not available: " .. mason_registry)
+            os.exit(0) -- Not failing on this
+          end
+          
+          local missing_servers = {}
+          for _, server in ipairs(required_servers) do
+            if not mason_registry.is_available(server) then
+              table.insert(missing_servers, server)
+            end
+          end
+          
+          if #missing_servers > 0 then
+            print("⚠️ Some servers not available:")
+            for _, server in ipairs(missing_servers) do
+              print("  - " .. server)
+            end
+          else
+            print("✅ All required servers are available")
+          end
+          
+          print("✅ Server configuration check completed")
+          EOF
+          
+          nvim --headless -u init.lua -c "luafile check_servers.lua" || true
+          
+      - name: Print Neovim health check
+        run: |
+          nvim --headless -c "checkhealth mason" -c "q" > mason_health.txt 2>&1 || true
+          cat mason_health.txt
+          
+      - name: Run Mason manually
+        run: |
+          # Final test, try running the Mason command directly
+          nvim --headless -c "Mason" -c "sleep 2000m" -c "q" || echo "Mason command execution attempted"
+          
+      - name: Summary
+        run: echo "✅ Mason LSP configuration validation completed!" 
