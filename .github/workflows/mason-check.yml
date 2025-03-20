@@ -72,6 +72,10 @@ jobs:
           git clone --depth 1 https://github.com/nvim-lua/plenary.nvim ~/.local/share/nvim/site/pack/packer/start/plenary.nvim
           git clone --depth 1 https://github.com/simrat39/rust-tools.nvim ~/.local/share/nvim/site/pack/packer/start/rust-tools.nvim
           git clone --depth 1 https://github.com/folke/tokyonight.nvim ~/.local/share/nvim/site/pack/packer/start/tokyonight.nvim
+          git clone --depth 1 https://github.com/akinsho/toggleterm.nvim ~/.local/share/nvim/site/pack/packer/start/toggleterm.nvim
+          git clone --depth 1 https://github.com/sindrets/diffview.nvim ~/.local/share/nvim/site/pack/packer/start/diffview.nvim
+          git clone --depth 1 https://github.com/nvim-tree/nvim-web-devicons ~/.local/share/nvim/site/pack/packer/start/nvim-web-devicons
+          git clone --depth 1 https://github.com/lewis6991/gitsigns.nvim ~/.local/share/nvim/site/pack/packer/start/gitsigns.nvim
           
           echo "Core LSP plugins installed directly"
       
