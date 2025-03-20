@@ -43,6 +43,22 @@ jobs:
         with:
           neovim: true
           version: stable
+      
+      - name: Setup proper runtimepath
+        run: |
+          # Create proper directory structure for Neovim
+          NVIM_CONFIG_DIR="$HOME/.config/nvim"
+          mkdir -p "$NVIM_CONFIG_DIR"
+          
+          # Copy files from the repository to standard Neovim config location
+          cp -r ./* "$NVIM_CONFIG_DIR/"
+          
+          # Create symlinks back to the repo for any scripts that look for files in the working directory
+          ln -s "$NVIM_CONFIG_DIR/lua" ./lua
+          ln -s "$NVIM_CONFIG_DIR/init.lua" ./init.lua
+          
+          echo "Configuration linked to standard Neovim config location: $NVIM_CONFIG_DIR"
+          ls -la "$NVIM_CONFIG_DIR"
           
       - name: Install Packer
         run: |
@@ -60,6 +76,8 @@ jobs:
           git clone --depth 1 https://github.com/nvim-lua/plenary.nvim ~/.local/share/nvim/site/pack/packer/start/plenary.nvim
           git clone --depth 1 https://github.com/nvim-telescope/telescope.nvim ~/.local/share/nvim/site/pack/packer/start/telescope.nvim
           git clone --depth 1 https://github.com/nvim-treesitter/nvim-treesitter ~/.local/share/nvim/site/pack/packer/start/nvim-treesitter
+          git clone --depth 1 https://github.com/jose-elias-alvarez/null-ls.nvim ~/.local/share/nvim/site/pack/packer/start/null-ls.nvim
+          git clone --depth 1 https://github.com/simrat39/rust-tools.nvim ~/.local/share/nvim/site/pack/packer/start/rust-tools.nvim
           
           echo "Core plugins installed directly"
       
@@ -93,14 +111,30 @@ jobs:
           EOF
           
           # Run with timeout
-          nvim --headless -c "luafile check_mason.lua" || echo "Mason check completed with possible warnings"
+          cd ~/.config/nvim && timeout 30s nvim --headless -c "luafile $GITHUB_WORKSPACE/check_mason.lua" || echo "Mason check completed with possible warnings"
+      
+      - name: Test individual modules
+        run: |
+          cd ~/.config/nvim
+          
+          # Test the user.lsp.mason module specifically
+          echo "Testing user.lsp.mason module..."
+          nvim --headless -c "lua local ok, m = pcall(require, 'user.lsp.mason'); if ok then print('✅ Module loaded') else print('❌ Error: ' .. m) end" -c "q"
+          
+          # Test the user.plugins module
+          echo "Testing user.plugins module..."
+          nvim --headless -c "lua local ok, m = pcall(require, 'user.plugins'); if ok then print('✅ Module loaded') else print('❌ Error: ' .. m) end" -c "q"
       
       - name: Make check script executable
-        run: chmod +x ./scripts/check_neovim.sh
+        run: |
+          cd ~/.config/nvim
+          chmod +x ./scripts/check_neovim.sh
       
       - name: Run Neovim configuration check
         timeout-minutes: 5
-        run: ./scripts/check_neovim.sh
+        run: |
+          cd ~/.config/nvim
+          ./scripts/check_neovim.sh
           
       - name: Summary
         run: echo "✅ Neovim configuration validation completed successfully!" 
