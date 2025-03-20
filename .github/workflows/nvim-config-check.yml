@@ -2,9 +2,17 @@ name: Neovim Config Validation
 
 on:
   push:
-    branches: [ main, master ]
+    paths:
+      - 'lua/**'
+      - 'init.lua'
+      - 'scripts/check_neovim.sh'
+      - '.github/workflows/nvim-config-check.yml'
   pull_request:
-    branches: [ main, master ]
+    paths:
+      - 'lua/**'
+      - 'init.lua'
+      - 'scripts/check_neovim.sh'
+      - '.github/workflows/nvim-config-check.yml'
   workflow_dispatch:  # Allow manual trigger
 
 jobs:
@@ -27,10 +35,6 @@ jobs:
       - name: Install luacheck
         run: luarocks install luacheck
       
-      - name: Run luacheck 
-        run: |
-          luacheck lua/ --no-max-line-length --no-max-comment-line-length
-      
       - name: Install Neovim
         uses: rhysd/action-setup-vim@v1
         with:
@@ -41,27 +45,12 @@ jobs:
         run: |
           git clone --depth 1 https://github.com/wbthomason/packer.nvim\
            ~/.local/share/nvim/site/pack/packer/start/packer.nvim
-          
-      - name: Validate init.lua syntax
-        run: nvim --headless -c 'lua print("Checking init.lua syntax")' -c 'q' || echo "Init.lua has syntax errors"
       
-      - name: Check if plugins can be loaded
-        run: |
-          mkdir -p ~/.local/share/nvim/site/pack/packer/opt
-          nvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerSync' || true
-          echo "Plugin installation attempted"
-          
-      - name: Check if configuration loads without errors
-        run: |
-          nvim --headless --noplugin -u init.lua -c "lua vim.health.report()" -c "q" > health_check.txt 2>&1 || true
-          cat health_check.txt
-          ! grep -q "Error" health_check.txt || (echo "Errors found in configuration" && exit 1)
-          
-      - name: Check LSP configuration
-        run: |
-          # Verify LSP config files exist and have proper syntax
-          [ -d "./lua/user/lsp" ] || (echo "LSP configuration directory missing" && exit 1)
-          find ./lua/user/lsp -name "*.lua" -exec nvim --headless -c "luafile {}" -c "q" \; || (echo "LSP config has errors" && exit 1)
+      - name: Make check script executable
+        run: chmod +x ./scripts/check_neovim.sh
+      
+      - name: Run Neovim configuration check
+        run: ./scripts/check_neovim.sh
           
       - name: Summary
         run: echo "✅ Neovim configuration validation completed successfully!" 
