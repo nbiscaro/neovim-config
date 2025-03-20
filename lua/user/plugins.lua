@@ -98,12 +98,12 @@ return packer.startup(function(use)
   use "akinsho/toggleterm.nvim"
   
   -- Diffview for better diff viewing
-  -- Rust tools for enhanced Rust development experience
   use {
     "sindrets/diffview.nvim",
     requires = "nvim-lua/plenary.nvim"
   }
 
+  -- Rust tools for enhanced Rust development experience
   use {
     "simrat39/rust-tools.nvim",
     requires = {
@@ -134,8 +134,58 @@ return packer.startup(function(use)
     requires = "nvim-tree/nvim-web-devicons"
   }
 
+
   -- Project
   use "ahmedkhalf/project.nvim"
+
+  -- GitHub Copilot - using the Lua-based version
+  use {
+    "zbirenbaum/copilot.lua",
+    cmd = "Copilot",
+    event = "InsertEnter",
+    config = function()
+      require("copilot").setup({
+        suggestion = { 
+          enabled = true,
+          auto_trigger = true,
+          keymap = {
+            accept = "<Tab>",
+            accept_word = false,
+            accept_line = false,
+            next = "<C-n>",
+            prev = "<C-p>",
+            dismiss = "<C-x>",
+          },
+        },
+        panel = { enabled = true },
+        filetypes = { ["*"] = true },
+        copilot_node_command = "/opt/homebrew/bin/node"
+      })
+    end
+  }
+  
+  use {
+    "zbirenbaum/copilot-cmp",
+    after = { "copilot.lua", "nvim-cmp" },
+    config = function()
+      require("copilot_cmp").setup()
+    end
+  }
+
+  -- Copilot lualine integration
+  use "AndreM222/copilot-lualine"
+
+  -- AI codecompanion
+  use {
+    "olimorris/codecompanion.nvim",
+    config = function()
+      require("codecompanion").setup()
+    end,
+    requires = {
+      "nvim-lua/plenary.nvim",
+      "nvim-treesitter/nvim-treesitter",
+    }
+  }
 
   -- Neovim welcome page
   use 'goolord/alpha-nvim'

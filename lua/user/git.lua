@@ -36,14 +36,14 @@ local function setup_keymaps()
     keymap("n", "<leader>gg", "<cmd>lua _LAZYGIT_TOGGLE()<CR>", opts)
 
     -- Diffview toggle keybindings
-    keymap("n", "<leader>gd", "<cmd>lua toggle_diffview()<CR>", opts)
-    keymap("n", "<leader>gh", "<cmd>lua toggle_file_history()<CR>", opts)
-    keymap("n", "<leader>gH", "<cmd>lua toggle_repo_history()<CR>", opts)
+    keymap("n", "<leader>dd", "<cmd>lua toggle_diffview()<CR>", opts)
+    keymap("n", "<leader>dh", "<cmd>lua toggle_file_history()<CR>", opts)
+    keymap("n", "<leader>dH", "<cmd>lua toggle_repo_history()<CR>", opts)
 
     -- Additional Diffview commands (these don't need toggles as they're one-time actions)
-    keymap("n", "<leader>gD", ":DiffviewOpen ", opts)  -- For specific branch/commit comparison
-    keymap("n", "<leader>gf", ":DiffviewFocusFiles<CR>", opts)  -- Focus files panel
-    keymap("n", "<leader>gr", ":DiffviewRefresh<CR>", opts)  -- Refresh view
+    keymap("n", "<leader>dD", ":DiffviewOpen ", opts)  -- For specific branch/commit comparison
+    keymap("n", "<leader>df", ":DiffviewFocusFiles<CR>", opts)  -- Focus files panel
+    keymap("n", "<leader>dr", ":DiffviewRefresh<CR>", opts)  -- Refresh view
 end
 
 -- Helper function to check if a buffer is a Diffview buffer
@@ -67,7 +67,7 @@ function _G.toggle_diffview()
     if has_diffview_open() then
         vim.cmd("DiffviewClose")
     else
-        vim.cmd("DiffviewOpen")
+        vim.cmd("DiffviewOpen -layout=diff2_vertical")
     end
 end
 
