@@ -53,6 +53,10 @@ jobs:
           # Copy files from the repository to standard Neovim config location
           cp -r ./* "$NVIM_CONFIG_DIR/"
           
+          # Remove files if they exist before creating symlinks
+          [ -e ./lua ] && rm -rf ./lua
+          [ -e ./init.lua ] && rm -f ./init.lua
+          
           # Create symlinks back to the repo for any scripts that look for files in the working directory
           ln -s "$NVIM_CONFIG_DIR/lua" ./lua
           ln -s "$NVIM_CONFIG_DIR/init.lua" ./init.lua
