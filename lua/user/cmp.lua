@@ -42,6 +42,7 @@ local kind_icons = {
   Event = "",
   Operator = "",
   TypeParameter = "󰉺",
+  Copilot = "", 
 }
 -- find more here: https://www.nerdfonts.com/cheat-sheet
 
@@ -101,6 +102,7 @@ cmp.setup {
       vim_item.kind = string.format("%s", kind_icons[vim_item.kind])
       -- vim_item.kind = string.format('%s %s', kind_icons[vim_item.kind], vim_item.kind) -- This concatonates the icons with the name of the item kind
       vim_item.menu = ({
+        copilot = "[Copilot]",
         luasnip = "[Snippet]",
         buffer = "[Buffer]",
         path = "[Path]",
@@ -109,9 +111,10 @@ cmp.setup {
     end,
   },
   sources = {
-    { name = "luasnip" },
-    { name = "buffer" },
-    { name = "path" },
+    { name = "copilot", group_index = 2 }, -- Add Copilot as a source
+    { name = "luasnip", group_index = 2 },
+    { name = "buffer", group_index = 2 },
+    { name = "path", group_index = 2 },
   },
   confirm_opts = {
     behavior = cmp.ConfirmBehavior.Replace,
@@ -121,7 +124,34 @@ cmp.setup {
     documentation = cmp.config.window.bordered(),
   },
   experimental = {
-    ghost_text = false,
+    ghost_text = false, -- Set to false since Copilot has its own ghost text
     native_menu = false,
   },
+  sorting = {
+    priority_weight = 2,
+    comparators = {
+      -- Default comparators
+      cmp.config.compare.offset,
+      cmp.config.compare.exact,
+      cmp.config.compare.score,
+      cmp.config.compare.recently_used,
+      cmp.config.compare.locality,
+      cmp.config.compare.kind,
+      cmp.config.compare.sort_text,
+      cmp.config.compare.length,
+      cmp.config.compare.order,
+    },
+  },
 }
+
+-- Set highlight group for Copilot completions (GitHub green color)
+vim.api.nvim_set_hl(0, "CmpItemKindCopilot", {fg ="#6CC644"})
+
+-- Handle Copilot suggestion visibility based on cmp completion menu state
+cmp.event:on("menu_opened", function()
+  vim.b.copilot_suggestion_hidden = true
+end)
+
+cmp.event:on("menu_closed", function()
+  vim.b.copilot_suggestion_hidden = false
+end)

@@ -134,8 +134,32 @@ return packer.startup(function(use)
     requires = "nvim-tree/nvim-web-devicons"
   }
 
+
   -- Project
   use "ahmedkhalf/project.nvim"
+
+  -- GitHub Copilot - using the Lua-based version
+  use {
+    "zbirenbaum/copilot.lua",
+    cmd = "Copilot",
+    event = "InsertEnter",
+    config = function()
+      require("copilot").setup({
+        suggestion = { enabled = true, auto_trigger = true },
+        panel = { enabled = true },
+        filetypes = { ["*"] = true },
+        copilot_node_command = "/opt/homebrew/bin/node"
+      })
+    end
+  }
+  
+  use {
+    "zbirenbaum/copilot-cmp",
+    after = { "copilot.lua", "nvim-cmp" },
+    config = function()
+      require("copilot_cmp").setup()
+    end
+  }
 
   -- Neovim welcome page
   use 'goolord/alpha-nvim'
