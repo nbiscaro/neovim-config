@@ -161,6 +161,9 @@ return packer.startup(function(use)
     end
   }
 
+  -- Copilot lualine integration
+  use "AndreM222/copilot-lualine"
+
   -- Neovim welcome page
   use 'goolord/alpha-nvim'
 
