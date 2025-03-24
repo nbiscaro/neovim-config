@@ -90,3 +90,25 @@ keymap("v", "<leader>id", "<cmd>CodeCompanionToggle documentation<CR>", opts) --
 keymap("n", "<leader>ir", "<cmd>CodeCompanionActions<CR>", opts)              -- Show actions menu
 keymap("n", "<leader>ik", "<cmd>CodeCompanionToggle<CR>", opts)               -- Toggle companion window
 
+-- Toggle hidden files in Telescope
+local telescope_hidden = true
+function _G.toggle_telescope_hidden()
+    telescope_hidden = not telescope_hidden
+    local telescope_builtin = require('telescope.builtin')
+    require('telescope').setup({
+        pickers = {
+            find_files = {
+                hidden = telescope_hidden,
+                no_ignore = telescope_hidden,
+            },
+            live_grep = {
+                additional_args = telescope_hidden and function() return {"--hidden"} end or function() return {} end
+            }
+        }
+    })
+    print("Telescope hidden files: " .. (telescope_hidden and "ON" or "OFF"))
+end
+
+-- Map it to a key
+vim.api.nvim_set_keymap("n", "<leader>fh", ":lua toggle_telescope_hidden()<CR>", {noremap = true, silent = true})
+

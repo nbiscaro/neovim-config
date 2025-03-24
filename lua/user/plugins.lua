@@ -121,6 +121,26 @@ return packer.startup(function(use)
   -- Debug adapter protocol for Rust debugging
   use "mfussenegger/nvim-dap"
 
+  -- DAP UI components
+  use { "rcarriga/nvim-dap-ui", requires = {"mfussenegger/nvim-dap"} }
+  
+  -- DAP virtual text (shows values inline)
+  use { "theHamsta/nvim-dap-virtual-text", requires = {"mfussenegger/nvim-dap"} }
+  
+  -- Mason integration for DAP
+  use { "jay-babu/mason-nvim-dap.nvim", requires = {
+    "williamboman/mason.nvim",
+    "mfussenegger/nvim-dap"
+  }}
+  
+  -- DAP extensions for specific languages
+  use { "leoluz/nvim-dap-go", requires = "mfussenegger/nvim-dap" }    -- Go
+  use { "mfussenegger/nvim-dap-python", requires = "mfussenegger/nvim-dap" }  -- Python
+  use { "jbyuki/one-small-step-for-vimkind", requires = "mfussenegger/nvim-dap" }  -- Lua
+
+  -- Add this for C++ debugging
+  use { "Civitasv/cmake-tools.nvim", requires = "mfussenegger/nvim-dap" }  -- For CMake projects
+
   -- Easily comment stuff
   use "numToStr/Comment.nvim"
 

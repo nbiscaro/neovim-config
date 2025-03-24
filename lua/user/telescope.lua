@@ -7,10 +7,14 @@ local actions = require "telescope.actions"
 
 telescope.setup {
   defaults = {
-
     prompt_prefix = " ",
     selection_caret = " ",
     path_display = { "smart" },
+
+    file_ignore_patterns = {
+      -- Add patterns you still want to ignore even with hidden files shown
+      "node_modules", ".git/", "%.lock" 
+    },
 
     mappings = {
       i = {
@@ -78,13 +82,15 @@ telescope.setup {
     },
   },
   pickers = {
-    -- Default configuration for builtin pickers goes here:
-    -- picker_name = {
-    --   picker_config_key = value,
-    --   ...
-    -- }
-    -- Now the picker_config_key will be applied every time you call this
-    -- builtin picker
+    find_files = {
+      hidden = true,  -- This makes find_files show hidden files
+      no_ignore = true,  -- This makes find_files show .gitignore'd files
+    },
+    live_grep = {
+      additional_args = function()
+        return {"--hidden"}  -- This makes live_grep search in hidden files
+      end
+    }
   },
   extensions = {
     -- Your extension configuration goes here:
