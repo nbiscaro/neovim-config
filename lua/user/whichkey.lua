@@ -177,6 +177,10 @@ local mappings = {
     h = { "<cmd>ToggleTerm size=10 direction=horizontal<cr>", "Horizontal" },
     v = { "<cmd>ToggleTerm size=80 direction=vertical<cr>", "Vertical" },
   },
+
+  f = {
+    h = { "<cmd>lua toggle_telescope_hidden()<CR>", "Toggle Hidden Files" },
+  },
 }
 
 local vopts = {
